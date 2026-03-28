@@ -410,12 +410,70 @@
   .dot-claude { background: var(--tag-claude-text); }
   .dot-profile { background: var(--tag-profile-text); }
 
+  /* ── HAMBURGER BUTTON (mobile only) ── */
+  .menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    color: var(--text);
+    margin-right: 8px;
+  }
+
+  /* ── MOBILE OVERLAY ── */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 40;
+  }
+  .sidebar-overlay.open { display: block; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    header { padding: 0 1rem; }
+    .header-meta { display: none; }
+    .menu-btn { display: flex; align-items: center; }
+
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 50;
+      transform: translateX(-100%);
+      transition: transform 0.22s ease;
+      width: 280px;
+    }
+    .sidebar.open { transform: translateX(0); }
+
+    .content-area { padding: 20px 18px 48px; }
+
+    .welcome-name { font-size: 22px; }
+    .welcome-summary { font-size: 14px; padding-left: 14px; }
+
+    .folder-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .file-view { max-width: 100%; }
+  }
+
+  @media (max-width: 420px) {
+    .folder-grid { grid-template-columns: 1fr; }
+    .welcome-name { font-size: 20px; }
+    .badge { font-size: 10px; }
+  }
+
 </style>
 </head>
 <body>
 
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <header>
   <div class="header-left">
+    <button class="menu-btn" onclick="toggleSidebar()" aria-label="Toggle explorer">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect y="3" width="18" height="1.5" rx="1" fill="currentColor"/><rect y="8.25" width="18" height="1.5" rx="1" fill="currentColor"/><rect y="13.5" width="18" height="1.5" rx="1" fill="currentColor"/></svg>
+    </button>
     <div class="repo-name" onclick="showWelcome()" style="cursor:pointer;" title="Back to home"><span>~/</span>sri-system</div>
     <div class="header-meta">17 files · 6 directories</div>
   </div>
@@ -1559,6 +1617,16 @@ function openFolder(name) {
   });
 }
 
+function toggleSidebar() {
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('open');
+}
+
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
 function showWelcome() {
   document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
   document.getElementById('welcome-view').style.display = 'block';
@@ -1610,6 +1678,9 @@ function showFile(key, pushState = true) {
 
   // scroll to top
   document.getElementById('content-area').scrollTop = 0;
+
+  // close sidebar on mobile after selecting a file
+  closeSidebar();
 }
 
 function renderMd(text) {
