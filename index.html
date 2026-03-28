@@ -381,6 +381,8 @@
   .md a:hover { opacity: 0.75; }
   .md strong { font-weight: 500; color: var(--text); }
   .md code { font-family: var(--mono); font-size: 12px; background: var(--bg-code); padding: 1px 5px; border-radius: 3px; color: #0d2545; }
+  .md code.ref-link { cursor: pointer; border-bottom: 1px solid #6a96cc; transition: background 0.15s; }
+  .md code.ref-link:hover { background: #8aaedc; color: #0d2545; }
   .md pre { background: var(--bg-code); border: 1px solid var(--border-code); border-radius: var(--radius); padding: 16px; margin: 16px 0; overflow-x: auto; }
   .md pre code { background: none; padding: 0; font-size: 12px; line-height: 1.6; color: #0d2545; }
   .md blockquote { border-left: 3px solid var(--border-code); padding: 10px 18px; margin: 16px 0; background: var(--bg-code); border-radius: 0 var(--radius) var(--radius) 0; }
@@ -1748,7 +1750,33 @@ function renderMd(text) {
     }
   }
   if (inTable) out.push(buildTable(tableLines));
-  return out.join('\n');
+  return linkifyRefs(out.join('\n'));
+}
+
+const REF_MAP = {
+  'tools/field_cto_translation':        'field-cto',
+  'tools/enterprise_deal_architecture':  'enterprise-deal',
+  'tools/reference_architecture_factory':'ref-arch-factory',
+  'tools/automation_pipeline_design':    'automation-pipeline',
+  'tools/deterministic_ai_validation':   'det-ai-validation',
+  'personas/forward_synthesis':          'forward-synthesis',
+  'personas/fsi_resilience':             'fsi-resilience',
+  'personas/infra_orchestrator':         'infra-orchestrator',
+  'personas/technical_presales':         'technical-presales',
+  'skills/fsi_architecture':             'skill-fsi',
+  'skills/genai_solution_development':   'skill-genai',
+  'skills/ai_infrastructure':            'skill-ai-infra',
+  'skills/enterprise_architecture':      'skill-ent-arch',
+  'rules/automation_is_the_mission':     'rule-automation',
+  'rules/bell_labs_standard':            'rule-belllabs',
+};
+
+function linkifyRefs(html) {
+  return html.replace(/<code>([^<]+)<\/code>/g, (match, ref) => {
+    const key = REF_MAP[ref.trim()];
+    if (!key) return match;
+    return `<code class="ref-link" onclick="showFile('${key}')" title="Open ${ref.trim()}">${ref}</code>`;
+  });
 }
 
 function buildTable(lines) {
