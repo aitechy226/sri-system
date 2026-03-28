@@ -48,6 +48,7 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
 
@@ -245,6 +246,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 36px 48px 60px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .content-area::-webkit-scrollbar { width: 6px; }
@@ -447,7 +449,7 @@
     }
     .sidebar.open { transform: translateX(0); }
 
-    .content-area { padding: 20px 18px 48px; }
+    .content-area { padding: 20px 18px calc(48px + env(safe-area-inset-bottom)); }
 
     .welcome-name { font-size: 22px; }
     .welcome-summary { font-size: 14px; padding-left: 14px; }
