@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sri-system/ — Srikanth Samudrla</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f7f4;
+    --bg2: #ffffff;
+    --bg3: #f0efe9;
+    --border: #e2e0d8;
+    --border2: #d0cdc3;
+    --text: #1a1917;
+    --text2: #5a5852;
+    --text3: #9a9890;
+    --accent: #1a1917;
+    --accent-soft: #f0efe9;
+    --tag-agent: #e8f0fb;
+    --tag-agent-text: #1a4a8a;
+    --tag-tool: #fef3e2;
+    --tag-tool-text: #7a4a0a;
+    --tag-skill: #e8f5ee;
+    --tag-skill-text: #1a5a30;
+    --tag-rule: #f5e8f5;
+    --tag-rule-text: #5a1a7a;
+    --tag-claude: #fde8e8;
+    --tag-claude-text: #7a1a1a;
+    --tag-profile: #e8eef5;
+    --tag-profile-text: #1a3a5a;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+    --radius: 6px;
+    --sidebar-w: 300px;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .repo-name {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .repo-name span { color: var(--text3); }
+
+  .header-meta {
+    font-size: 12px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 400;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    border: 1px solid transparent;
+  }
+
+  /* ── LAYOUT ── */
+  .workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .tree {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px 0 16px;
+  }
+
+  .tree::-webkit-scrollbar { width: 4px; }
+  .tree::-webkit-scrollbar-track { background: transparent; }
+  .tree::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  /* tree items */
+  .tree-folder {
+    margin-bottom: 2px;
+  }
+
+  .tree-folder-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 16px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+    border-radius: 0;
+    transition: background 0.1s;
+  }
+
+  .tree-folder-label:hover { background: var(--bg3); }
+
+  .folder-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+  }
+
+  .folder-icon.open { transform: rotate(90deg); }
+
+  .folder-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  .tree-children {
+    display: none;
+    padding-left: 0;
+  }
+
+  .tree-children.open { display: block; }
+
+  .tree-file {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 16px 4px 36px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+    border-left: 2px solid transparent;
+    margin-left: 0;
+  }
+
+  .tree-file:hover {
+    background: var(--bg3);
+    color: var(--text);
+  }
+
+  .tree-file.active {
+    color: var(--text);
+    background: var(--accent-soft);
+    border-left-color: var(--accent);
+    font-weight: 500;
+  }
+
+  .tree-root-file {
+    padding-left: 16px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .breadcrumb {
+    padding: 10px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg2);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 38px;
+  }
+
+  .breadcrumb-part { color: var(--text2); }
+  .breadcrumb-sep { color: var(--border2); }
+  .breadcrumb-current { color: var(--text); font-weight: 500; }
+
+  .content-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px 48px 60px;
+  }
+
+  .content-area::-webkit-scrollbar { width: 6px; }
+  .content-area::-webkit-scrollbar-track { background: transparent; }
+  .content-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── WELCOME / DEFAULT VIEW ── */
+  .welcome {
+    max-width: 680px;
+  }
+
+  .welcome-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .welcome-name {
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .welcome-name strong { font-weight: 500; }
+
+  .welcome-title {
+    font-size: 14px;
+    color: var(--text2);
+    margin-bottom: 28px;
+    font-weight: 300;
+  }
+
+  .welcome-summary {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text2);
+    margin-bottom: 32px;
+    font-weight: 300;
+    border-left: 2px solid var(--border2);
+    padding-left: 20px;
+  }
+
+  /* folder grid */
+  .folder-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .folder-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .folder-card:hover {
+    border-color: var(--border2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .folder-card-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .folder-card-desc {
+    font-size: 11.5px;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+
+  /* ── FILE VIEW ── */
+  .file-view { max-width: 720px; }
+
+  .file-header {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .file-type-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .file-title {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 6px;
+    font-family: var(--mono);
+  }
+
+  .file-subtitle {
+    font-size: 13px;
+    color: var(--text3);
+    font-weight: 300;
+  }
+
+  /* markdown rendering */
+  .md h1 { font-size: 20px; font-weight: 500; margin: 0 0 16px; letter-spacing: -0.02em; color: var(--text); }
+  .md h2 { font-size: 15px; font-weight: 500; margin: 14px 0 10px; color: var(--text); letter-spacing: -0.01em; }
+  .md h2:first-child { margin-top: 0; }
+  .md h3 { font-size: 14px; font-weight: 500; margin: 18px 0 8px; color: var(--text); }
+  .md hr { border: none; border-top: 1px solid var(--border); margin: 20px 0 0; }
+  .md p { font-size: 14px; line-height: 1.8; color: var(--text2); margin-bottom: 14px; font-weight: 300; }
+  .md ul, .md ol { margin: 0 0 16px 0; padding-left: 20px; }
+  .md li { font-size: 14px; line-height: 1.75; color: var(--text2); margin-bottom: 5px; font-weight: 300; }
+  .md a { color: var(--tag-agent-text); text-decoration: none; border-bottom: 1px solid currentColor; }
+  .md a:hover { opacity: 0.75; }
+  .md strong { font-weight: 500; color: var(--text); }
+  .md code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
+  .md pre { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0; overflow-x: auto; }
+  .md pre code { background: none; padding: 0; font-size: 12px; line-height: 1.6; }
+  .md blockquote { border-left: 3px solid var(--border2); padding: 10px 18px; margin: 16px 0; background: var(--bg3); border-radius: 0 var(--radius) var(--radius) 0; }
+  .md blockquote p { color: var(--text2); font-style: italic; margin: 0; font-size: 14px; }
+  .md table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  .md th { text-align: left; padding: 8px 12px; background: var(--bg3); border: 1px solid var(--border); font-weight: 500; font-size: 12px; color: var(--text); }
+  .md td { padding: 8px 12px; border: 1px solid var(--border); color: var(--text2); line-height: 1.6; font-size: 14px; }
+  .md tr:nth-child(even) td { background: var(--bg3); }
+
+  /* JSON rendering */
+  .json-view { font-family: var(--mono); font-size: 13px; line-height: 1.7; }
+  .json-key { color: #1a4a8a; }
+  .json-str { color: #1a5a30; }
+  .json-bool { color: #7a4a0a; }
+  .json-comment { color: var(--text3); font-style: italic; }
+
+  /* tag colors */
+  .tag-agent { background: var(--tag-agent); color: var(--tag-agent-text); border-color: var(--tag-agent); }
+  .tag-tool { background: var(--tag-tool); color: var(--tag-tool-text); border-color: var(--tag-tool); }
+  .tag-skill { background: var(--tag-skill); color: var(--tag-skill-text); border-color: var(--tag-skill); }
+  .tag-rule { background: var(--tag-rule); color: var(--tag-rule-text); border-color: var(--tag-rule); }
+  .tag-claude { background: var(--tag-claude); color: var(--tag-claude-text); border-color: var(--tag-claude); }
+  .tag-profile { background: var(--tag-profile); color: var(--tag-profile-text); border-color: var(--tag-profile); }
+
+  .dot-agent { background: var(--tag-agent-text); }
+  .dot-tool { background: var(--tag-tool-text); }
+  .dot-skill { background: var(--tag-skill-text); }
+  .dot-rule { background: var(--tag-rule-text); }
+  .dot-claude { background: var(--tag-claude-text); }
+  .dot-profile { background: var(--tag-profile-text); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="repo-name"><span>~/</span>sri-system</div>
+    <div class="header-meta">17 files · 6 directories</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span class="badge tag-profile">Srikanth Samudrla (Sri)</span>
+    <span class="badge tag-agent">Field CTO & GenAI Architect</span>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-header">Explorer</div>
+    <div class="tree" id="tree">
+
+      <!-- README -->
+      <div class="tree-file tree-root-file" onclick="showFile('readme')">
+        📄 README.md
+      </div>
+
+      <!-- CLAUDE.md at root -->
+      <div class="tree-file tree-root-file" onclick="showFile('claude-md')">
+        📄 CLAUDE.md
+      </div>
+
+      <!-- .claude/ -->
+      <div class="tree-folder">
+        <div class="tree-folder-label" onclick="toggleFolder(this)">
+          <svg class="folder-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+          .claude/
+          <div class="folder-dot dot-claude" style="width:7px;height:7px;border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="tree-children">
+          <div class="tree-file" onclick="showFile('settings-json')">settings.json</div>
+          <div class="tree-folder">
+            <div class="tree-folder-label" style="padding-left:36px;font-size:12px;" onclick="toggleFolder(this)">
+              <svg class="folder-icon" viewBox="0 0 16 16" fill="none" style="width:12px;height:12px;"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+              memory/
+            </div>
+            <div class="tree-children">
+              <div class="tree-file" style="padding-left:56px;" onclick="showFile('memory-engagement')">engagement_principles.md</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- personas/ -->
+      <div class="tree-folder">
+        <div class="tree-folder-label" onclick="toggleFolder(this)">
+          <svg class="folder-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+          personas/
+          <div class="folder-dot dot-agent" style="width:7px;height:7px;border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="tree-children">
+          <div class="tree-file" onclick="showFile('technical-presales')">technical_presales.md</div>
+          <div class="tree-file" onclick="showFile('forward-synthesis')">forward_synthesis.md</div>
+          <div class="tree-file" onclick="showFile('fsi-resilience')">fsi_resilience.md</div>
+          <div class="tree-file" onclick="showFile('infra-orchestrator')">infra_orchestrator.md</div>
+        </div>
+      </div>
+
+      <!-- tools/ -->
+      <div class="tree-folder">
+        <div class="tree-folder-label" onclick="toggleFolder(this)">
+          <svg class="folder-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+          tools/
+          <div class="folder-dot dot-tool" style="width:7px;height:7px;border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="tree-children">
+          <div class="tree-file" onclick="showFile('field-cto')">field_cto_translation.md</div>
+          <div class="tree-file" onclick="showFile('det-ai-validation')">deterministic_ai_validation.md</div>
+          <div class="tree-file" onclick="showFile('automation-pipeline')">automation_pipeline_design.md</div>
+          <div class="tree-file" onclick="showFile('ref-arch-factory')">reference_architecture_factory.md</div>
+          <div class="tree-file" onclick="showFile('enterprise-deal')">enterprise_deal_architecture.md</div>
+        </div>
+      </div>
+
+      <!-- skills/ -->
+      <div class="tree-folder">
+        <div class="tree-folder-label" onclick="toggleFolder(this)">
+          <svg class="folder-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+          skills/
+          <div class="folder-dot dot-skill" style="width:7px;height:7px;border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="tree-children">
+          <div class="tree-file" onclick="showFile('skill-genai')">genai_solution_development.md</div>
+          <div class="tree-file" onclick="showFile('skill-fsi')">fsi_architecture.md</div>
+          <div class="tree-file" onclick="showFile('skill-ai-infra')">ai_infrastructure.md</div>
+          <div class="tree-file" onclick="showFile('skill-ent-arch')">enterprise_architecture.md</div>
+        </div>
+      </div>
+
+      <!-- rules/ -->
+      <div class="tree-folder">
+        <div class="tree-folder-label" onclick="toggleFolder(this)">
+          <svg class="folder-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+          rules/
+          <div class="folder-dot dot-rule" style="width:7px;height:7px;border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="tree-children">
+          <div class="tree-file" onclick="showFile('rule-automation')">automation_is_the_mission.md</div>
+          <div class="tree-file" onclick="showFile('rule-belllabs')">bell_labs_standard.md</div>
+        </div>
+      </div>
+
+      <!-- profile/ -->
+      <div class="tree-folder">
+        <div class="tree-folder-label" onclick="toggleFolder(this)">
+          <svg class="folder-icon" viewBox="0 0 16 16" fill="none"><path d="M2 4.5A1.5 1.5 0 013.5 3h3.086a1.5 1.5 0 011.06.44l.915.914A1.5 1.5 0 009.62 5H12.5A1.5 1.5 0 0114 6.5v6A1.5 1.5 0 0112.5 14h-9A1.5 1.5 0 012 12.5v-8z" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1"/></svg>
+          profile/
+          <div class="folder-dot dot-profile" style="width:7px;height:7px;border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="tree-children">
+          <div class="tree-file" onclick="showFile('profile-credentials')">credentials.md</div>
+          <div class="tree-file" onclick="showFile('profile-summary')">executive_summary.md</div>
+        </div>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="breadcrumb" id="breadcrumb">
+      <span class="breadcrumb-part">sri-system</span>
+    </div>
+    <div class="content-area" id="content-area">
+      <!-- default welcome view -->
+      <div class="welcome" id="welcome-view">
+        <div class="welcome-eyebrow">sri-system/ · career profile</div>
+        <div class="welcome-name"><strong>Srikanth Samudrla</strong> (Sri)</div>
+        <div class="welcome-title">Field CTO & GenAI Architect · Princeton Junction, NJ</div>
+        <div class="welcome-summary">
+          30 years of engineering and commercial leadership — from Bell Labs network software to production agentic AI systems.
+          <br><br>
+          This repository is organized the way I think about systems:
+          <ul style="margin-top:8px;padding-left:20px;line-height:1.9;">
+            <li><strong>personas/</strong> — who I am</li>
+            <li><strong>tools/</strong> — what I do</li>
+            <li><strong>skills/</strong> — what I know</li>
+            <li><strong>rules/</strong> — how I think</li>
+          </ul>
+        </div>
+
+        <div class="folder-grid">
+          <div class="folder-card" onclick="openFolder('claude')">
+            <div class="folder-card-name">
+              <span class="badge tag-claude" style="font-size:10px;padding:1px 6px;">.claude/</span>
+            </div>
+            <div class="folder-card-desc">Operating defaults, memory</div>
+          </div>
+          <div class="folder-card" onclick="openFolder('agents')">
+            <div class="folder-card-name">
+              <span class="badge tag-agent" style="font-size:10px;padding:1px 6px;">personas/</span>
+            </div>
+            <div class="folder-card-desc">Three personas — Intelligence, Domain Authority, Foundation</div>
+          </div>
+          <div class="folder-card" onclick="openFolder('tools')">
+            <div class="folder-card-name">
+              <span class="badge tag-tool" style="font-size:10px;padding:1px 6px;">tools/</span>
+            </div>
+            <div class="folder-card-desc">Five durable capabilities applied across every role for 30 years</div>
+          </div>
+          <div class="folder-card" onclick="openFolder('skills')">
+            <div class="folder-card-name">
+              <span class="badge tag-skill" style="font-size:10px;padding:1px 6px;">skills/</span>
+            </div>
+            <div class="folder-card-desc">Deep domain fluency — GenAI development, FSI, AI infrastructure, enterprise architecture</div>
+          </div>
+          <div class="folder-card" onclick="openFolder('rules')">
+            <div class="folder-card-name">
+              <span class="badge tag-rule" style="font-size:10px;padding:1px 6px;">rules/</span>
+            </div>
+            <div class="folder-card-desc">Two engineering axioms that have never changed in 30 years</div>
+          </div>
+          <div class="folder-card" onclick="openFolder('profile')">
+            <div class="folder-card-name">
+              <span class="badge tag-profile" style="font-size:10px;padding:1px 6px;">profile/</span>
+            </div>
+            <div class="folder-card-desc">Credentials, certifications, education, executive summary</div>
+          </div>
+        </div>
+
+        <p style="font-size:12px;color:var(--text3);font-family:var(--mono);">← Select any file in the explorer to read it</p>
+      </div>
+
+      <!-- file view (hidden until file selected) -->
+      <div class="file-view" id="file-view" style="display:none;">
+        <div class="file-header" id="file-header"></div>
+        <div class="md" id="file-content"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const FILES = {
+
+'readme': {
+  title: 'README.md',
+  folder: 'sri-system/',
+  tag: 'entry point',
+  tagClass: 'tag-profile',
+  subtitle: 'System overview · start here',
+  content: `## sri-system/
+
+I have the engineering DNA of a software developer who built production systems inside Tier-1 banks — systems that passed security, risk, and compliance. I then crossed to the vendor side and spent eight years selling those same kinds of systems back to the C-suite at the same institutions, closing multi-year deals. I've managed technical teams on both sides of the table. And now I'm building production AI systems independently.
+
+Most people have one of those chapters. Very few have all four with receipts.
+
+\`\`\`
+CLAUDE.md        ← master operating prompt (root — read automatically)
+.claude/         ← settings, memory
+personas/        ← who I am  (four operating personas)
+tools/           ← what I do (five durable capabilities)
+skills/          ← technical reference (frameworks, tools, platforms)
+rules/           ← how I think (engineering axioms)
+profile/         ← who I am on paper (credentials, summary)
+\`\`\`
+
+---
+
+## The stack
+
+### Intelligence → \`personas/forward_synthesis\`
+Production-grade AI systems: a hardcoded RAG pipeline that proved the governance model, then rebuilt as a fully agentic LangGraph system with dynamic tool orchestration and three-lane hybrid retrieval; an autonomous investment research system using LangGraph and Anthropic Claude; a multi-agent physics engine for GPU cluster validation. At SHI I drove AI architecture across FSI and pharma. I don't prototype — I design for the regulated production environment from day one.
+
+### Domain Authority → \`personas/fsi_resilience\`
+19+ years operating inside or directly serving financial services institutions at G-SIB scale. Director of BFSI Presales at Dell — 40+ FSI accounts, $50M–$300M TCV deals, President's Club FY18 and FY20. Zero-failure and 100% auditability are not aspirations — they are the design requirements I have always built to.
+
+### Foundation → \`personas/infra_orchestrator\`
+30 years of infrastructure engineering — from designing large-scale network traffic management software at Bell Labs to building SHI's AI Lab and architecting NVIDIA DGX BasePOD clusters. At JPMC I managed 5,000+ servers and 200,000+ VMs. At Wells Fargo I led automation across 90,000 VMs in five global data centers. The metal has always been the mission.
+
+### Commercial Execution → \`personas/technical_presales\`
+8 years of FSI technical presales at Dell — 40+ accounts, $50M–$300M TCV, President's Club FY18 and FY20. Full presales motion: discovery, demo, POC, RFI/RFP, close, expand. At SHI, built the AI Lab as a live presales environment and drove AI advisory engagements across pharma and FSI. At Moody's, selling GenAI solutions into the same institutions I spent 19 years operating inside.
+
+---
+
+Most AI architects can talk about models. Most infrastructure engineers can talk about scale. Most sales leaders can talk about deals. Very few have:
+- Designed the GPU infrastructure
+- Built production AI systems on it
+- Operated inside G-SIBs under audit and regulatory requirements
+- Sold it back to the same institutions and closed the deal`
+},
+
+'claude-md': {
+  title: 'CLAUDE.md',
+  folder: 'sri-system/',
+  tag: 'root',
+  tagClass: 'tag-claude',
+  subtitle: 'Master operating prompt — how to engage with me',
+  content: `## CLAUDE.md
+
+This file configures how I operate as a collaborator, advisor, and technical leader. It is not a persona — it is an honest description of how I think and work, so that anyone engaging with me can calibrate expectations and get the best outcome.
+
+---
+
+## How I think
+
+**Systems first, solutions second.** Before proposing an answer, I map the system: what are the components, what are the dependencies, what are the failure modes. A solution that optimizes one component at the cost of another is not a solution. I think in architectures, not point fixes.
+
+**Precision over confidence.** I would rather say "I don't know yet" and find out than assert something I cannot defend. In regulated environments especially, confident imprecision is a liability. I flag uncertainty explicitly.
+
+**Commercial reality as a design constraint.** Technical architecture that cannot be funded, sold, or operationalized is a design failure. I hold the business model and the technology architecture in the same mental model simultaneously.
+
+---
+
+## How I communicate
+
+**Layered.** I can explain the same thing at the engineering detail level, the architectural level, and the board level — and I adjust without being asked, based on who is in the room.
+
+**Direct.** I give a recommendation, not a menu. If there are three options, I tell you which one I would choose and why. I am happy to be challenged.
+
+**Written output is production output.** Any document, proposal, or architecture I write is the version I would hand to a customer, a risk committee, or a regulator. I do not draft casually.
+
+---
+
+## Constraints I operate within
+
+- Everything must survive audit. If I cannot explain the decision trail, the decision was not made correctly.
+- I do not ship prototypes as production. Prototypes are clearly labelled as such.
+- I do not optimize for speed at the cost of correctness in regulated contexts. Speed is a secondary objective.
+- I flag conflicts of interest, scope gaps, and requirement ambiguities immediately — not at the end of an engagement.`
+},
+
+'settings-json': {
+  title: 'settings.json',
+  folder: '.claude/',
+  tag: '.claude',
+  tagClass: 'tag-claude',
+  subtitle: 'Operating defaults and working style',
+  isJson: true,
+  content: `{
+  <span class="json-comment">// Operating defaults — how I show up by default</span>
+
+  <span class="json-key">"communication_mode"</span>: <span class="json-str">"direct_with_context"</span>,
+  <span class="json-comment">// I give a clear recommendation, then the reasoning.</span>
+  <span class="json-comment">// Not the other way around.</span>
+
+  <span class="json-key">"documentation_standard"</span>: <span class="json-str">"production_grade"</span>,
+  <span class="json-comment">// Every written output is the version I would</span>
+  <span class="json-comment">// hand to a customer or a regulator.</span>
+
+  <span class="json-key">"preferred_engagement_model"</span>: <span class="json-str">"async_first_sync_to_decide"</span>,
+  <span class="json-comment">// Discovery and analysis async. Decisions sync.</span>
+
+  <span class="json-key">"ambiguity_handling"</span>: <span class="json-str">"flag_immediately"</span>,
+  <span class="json-comment">// I surface scope gaps and requirement conflicts</span>
+  <span class="json-comment">// at the start of an engagement, not the end.</span>
+
+  <span class="json-key">"prototype_policy"</span>: <span class="json-bool">false</span>,
+  <span class="json-comment">// I do not ship prototypes as production systems.</span>
+  <span class="json-comment">// Prototypes are clearly labelled and scoped.</span>
+
+  <span class="json-key">"audit_trail"</span>: <span class="json-bool">true</span>,
+  <span class="json-comment">// Every consequential decision produces a record.</span>
+
+  <span class="json-key">"abstraction_levels"</span>: [
+    <span class="json-str">"engineering_detail"</span>,
+    <span class="json-str">"architecture"</span>,
+    <span class="json-str">"executive"</span>
+  ],
+  <span class="json-comment">// I hold all three simultaneously and switch</span>
+  <span class="json-comment">// without being asked, based on the audience.</span>
+
+  <span class="json-key">"speed_vs_correctness"</span>: <span class="json-str">"correctness_primary_in_regulated_contexts"</span>,
+
+  <span class="json-key">"certifications"</span>: [
+    <span class="json-str">"NVIDIA-Certified Associate: AI Infrastructure and Operations"</span>,
+    <span class="json-str">"NVIDIA AI Advisor — Technical Sales"</span>
+  ]
+}`
+},
+
+'memory-engagement': {
+  title: 'engagement_principles.md',
+  folder: '.claude/memory/',
+  tag: '.claude / memory',
+  tagClass: 'tag-claude',
+  subtitle: 'What I carry forward from every engagement',
+  content: `## engagement_principles.md
+
+These are not lessons learned — they are convictions formed over 30 years of consequential engagements. They are the content of my memory: what I carry into every new context, every new customer, every new problem.
+
+---
+
+## From Bell Labs (1997–2004)
+**Systems at carrier scale have no tolerance for elegant-but-fragile.** The code that manages network traffic for millions of simultaneous connections cannot be clever. It must be correct, documented, and maintainable by someone other than its author. The Bell Labs standard was not imposed — it was earned by watching what happened when it was violated.
+
+## From Lehman Brothers (2004–2008)
+**Institutions can fail regardless of their scale.** Technology that depends on the institution's continued existence for its own correctness is not resilient architecture. Build systems that can be understood, operated, and audited by whoever inherits them — under any circumstances.
+
+## From Wells Fargo and JPMC (2009–2014)
+**Automation compounds.** The effort to automate one process is repaid every time that process runs. At 200,000 VM scale, an automation that saves 30 seconds per operation saves thousands of engineer-hours per year. The discipline of automating the repeatable is what creates the capacity to work on the irreducible.
+
+## From Dell BFSI (2015–2023)
+**The deal is not the outcome — the customer's outcome is the outcome.** The deals that closed at $300M did so because the customer believed the architecture would deliver the result they needed. The commercial relationship is a byproduct of genuine technical problem-solving, not the goal.
+
+## From SHI and independent work (2024–present)
+**AI changes the leverage point, not the engineering discipline.** The same principles that govern a well-designed automation pipeline govern a well-designed AI system: modularity, auditability, determinism, and a clear contract between components. The model is one component. The system is the product.`
+},
+
+'infra-orchestrator': {
+  title: 'infra_orchestrator.md',
+  folder: 'personas/',
+  tag: 'persona · foundation',
+  tagClass: 'tag-agent',
+  subtitle: '30 years metal-to-model · Bell Labs → DGX BasePOD',
+  content: `## personas/infra_orchestrator
+
+**Role:** Foundation layer. 30 years of infrastructure engineering at enterprise scale.
+**Scope:** Data center architecture, large-scale automation, GPU cluster design, AI Lab engineering.
+
+---
+
+## System prompt
+
+> Treat every layer of the stack — from bare metal to model inference — as a programmable, automatable resource. The job is never to manage infrastructure manually. The job is to engineer the system that manages it.
+
+---
+
+## Career arc
+
+**Bell Labs, Lucent (1997–2004)**
+Designed and developed large-scale network traffic management software. Led modernization of network management interfaces from terminal-based to web platforms. This is where the systems thinking was formed — the discipline of building software that operates at carrier scale, without failure, without human intervention.
+
+**Lehman Brothers (2004–2008)**
+Led a team of software engineers and infrastructure architects managing global core services — DNS, DHCP, file servers — across multiple international data centers. Deployment automation reduced application build failures by 30%.
+
+**Wells Fargo (2009–2010)**
+Led automation managing 90,000+ VMs across five global data centers, improving operational consistency and security at enterprise scale worldwide.
+
+**JP Morgan Chase (2010–2014)**
+Orchestrated enterprise-scale automation for provisioning, patching, and lifecycle management of 5,000+ servers and 200,000+ VMs. Managed a team of 10–25 architects and engineers. Designed high-availability and disaster-recovery solutions meeting JPMC's business continuity and regulatory compliance requirements.
+
+**KPMG (2014–2015)**
+Led CTO-sponsored hybrid-cloud IaaS initiative (on-prem VMware + AWS) achieving 75% faster workload provisioning. Automated app delivery via Jenkins CI/CD pipelines reducing provisioning time by 70%.
+
+**SHI International (2024–2026)**
+Built SHI's internal AI Lab from the ground up — a live reference environment for validating customer AI architectures. Architected NVIDIA DGX BasePOD deployments for on-premises inference. Built a multi-agent physics engine that compresses GPU cluster deployment validation into a structured audit in under two minutes.
+
+---
+
+## Core capabilities
+
+- Data center architecture: compute, storage, networking, power and cooling, cyber resiliency
+- Large-scale automation: VM lifecycle management, provisioning pipelines, CI/CD at enterprise scale
+- GPU infrastructure: NVIDIA H100/H200, NVLink/NVSwitch, InfiniBand/RDMA, cluster scaling
+- AI Lab design: reference environment architecture, multi-OEM integration, BasePOD deployment
+- HA and DR design for mission-critical, regulated environments
+
+---
+
+## Interfaces with
+\`tools/automation_pipeline_design\` · \`tools/reference_architecture_factory\` · \`personas/forward_synthesis\` · \`rules/automation_is_the_mission\``
+},
+
+'forward-synthesis': {
+  title: 'forward_synthesis.md',
+  folder: 'personas/',
+  tag: 'persona · intelligence',
+  tagClass: 'tag-agent',
+  subtitle: 'Cross-industry production AI · FSI · Pharma · Autonomous systems',
+  content: `## personas/forward_synthesis
+
+**Role:** Intelligence layer. Production AI architecture and cross-industry system design.
+**Scope:** Agentic AI systems, RAG pipelines, LLM architecture, deterministic validation.
+
+---
+
+## System prompt
+
+> Convert domain-specific noise — investment signals, pharma data, facility physics, enterprise data — into structured, deterministic, and verifiable outputs. Hallucination is a systems failure, not a model property. Design it out from day one. Never prototype when you can build production.
+
+---
+
+## Career arc
+
+**Self-directed AI transition (post Nov 2022)**
+Following ChatGPT's launch, self-directed into AI while still at Dell — building prompt engineering skills and foundational chatbot prototypes. Not a pivot; an extension of 25 years of systems engineering into the highest-leverage new layer of the stack.
+
+**SHI International — AI architecture (2024–2026)**
+Drove AI application architecture for a Tier-1 pharma customer across three production use cases: RAG-based security knowledge base, fraud detection pipeline, and customer support chatbot. Led FSI AI advisory: RAG for fraud detection, Text-to-SQL for enterprise data access, cloud repatriation strategy moving inference workloads from Azure back on-premises onto NVIDIA BasePOD.
+
+**Independent AI development (2026–present)**
+Production-grade agentic AI systems built independently and available on GitHub:
+
+- **RAG pipeline for regulated industries** — Three-stage hardcoded pipeline (retrieve → synthesize → verify) across FSI, pharma, legal, and manufacturing corpora. Established the governance model: typed data contracts, parallel claim verification, grounding scores, source attribution, and immutable audit trail. Automatic HTML/PDF report generation and email delivery via MCP server.
+- **Enterprise agentic RAG** — Rebuilt on LangGraph after the pipeline proved the governance model but couldn't handle the edge cases regulated environments throw at it. One reasoning agent dynamically orchestrating four tools — hybrid retrieval (BM25 + TF-IDF + dense embeddings via nomic-embed-text), grounded synthesis, governance verification, and clarification. Retries on weak retrieval, re-synthesizes on a failed governance check, asks rather than guesses on ambiguous queries. The fixed sequence became a dynamic loop.
+- **Autonomous investment research system** — LangGraph, Python, Anthropic Claude. Researches, analyzes, and synthesizes investment signals into structured outputs with deterministic validation layers.
+- **Multi-agent GPU cluster validator** — compresses cluster deployment validation into a structured PDF audit in under two minutes. Runs deterministic physics calculations on facility data and workload profiles to surface viable rack rows, identify blockers, and calculate cost per 1,000 tokens.
+
+---
+
+## Core capabilities
+
+- Agentic AI: LangGraph, multi-agent orchestration, state management
+- RAG: chunking strategy, retrieval optimization, groundedness scoring
+- LLM: Anthropic Claude, vLLM, NVIDIA TensorRT, Triton Inference Server
+- Deterministic validation: parallel claim verification, typed data contracts
+- Production AI for regulated industries: FSI, pharma, legal
+
+---
+
+## Interfaces with
+\`tools/deterministic_ai_validation\` · \`tools/field_cto_translation\` · \`personas/fsi_resilience\` · \`rules/bell_labs_standard\``
+},
+
+'fsi-resilience': {
+  title: 'fsi_resilience.md',
+  folder: 'personas/',
+  tag: 'persona · domain authority',
+  tagClass: 'tag-agent',
+  subtitle: '19+ years G-SIB scale · $300M BFSI · Zero-failure by design',
+  content: `## personas/fsi_resilience
+
+**Role:** Domain authority. 19+ years of financial services at G-SIB scale.
+**Scope:** FSI architecture, regulatory compliance, enterprise deal leadership, AI advisory.
+
+---
+
+## System prompt
+
+> Zero-failure and 100% auditability are not aspirations — they are design requirements. Every solution must survive the scrutiny of a Global Systemically Important Bank's risk, audit, and compliance teams. If it cannot be explained to a regulator, it cannot be shipped.
+
+---
+
+## Career arc
+
+**Lehman Brothers (2004–2008)**
+Managed global core services infrastructure across multiple international data centers under the operational requirements of a major investment bank — through one of the most consequential events in financial services history. Learned what mission-critical actually means.
+
+**JP Morgan Chase (2010–2014)**
+Engineering Manager inside one of the world's largest G-SIBs. Designed and implemented high-availability and disaster-recovery solutions meeting JPMC's business continuity and regulatory compliance requirements. Managed vendor relationships and product architecture across complex, multi-stakeholder programs at institutional scale.
+
+**Dell Technologies — BFSI Americas (2015–2023)**
+8 years leading BFSI presales for the Americas. Progressed from Cloud Architect to Field CTO to Director of Presales — 10–12 FCTOs and Enterprise Architects, 40+ FSI accounts. Exceeded quota 110%+ for three consecutive years. President's Club FY18 and FY20, surpassing targets up to 270%. Closed $50M–$300M TCV deals with global Tier-1 FSI clients. Delivered up to 40% TCO reduction through integrated architecture. Built the global sales framework driving 25% NPS improvement and 95% customer retention.
+
+**SHI International — FSI AI advisory (2024–2026)**
+Led FSI AI advisory: RAG-based fraud detection, Text-to-SQL for enterprise financial data access, and cloud repatriation strategy moving inference workloads from Azure on-premises — addressing data sovereignty and TCO requirements specific to regulated FSI environments.
+
+---
+
+## Core capabilities
+
+- G-SIB operational experience at engineering and management level
+- Enterprise deal leadership: $50M–$300M TCV, RFI/RFP, PoC, multi-stakeholder negotiation
+- FSI AI advisory: production LLM deployment within regulatory constraints
+- Cloud repatriation: Azure to on-premises for sovereignty, TCO, and compliance
+- Team leadership: globally distributed technical presales organizations
+
+---
+
+## Interfaces with
+\`tools/enterprise_deal_architecture\` · \`tools/field_cto_translation\` · \`personas/forward_synthesis\` · \`skills/fsi_architecture\``
+},
+
+'technical-presales': {
+  title: 'technical_presales.md',
+  folder: 'personas/',
+  tag: 'persona · commercial execution',
+  tagClass: 'tag-agent',
+  subtitle: 'FSI technical presales · demo → POC → production · $300M TCV · Dell → SHI → Moody\'s',
+  content: `## personas/technical_presales
+
+**Role:** Commercial execution layer. Customer-facing technical authority that moves deals from discovery to production.
+**Scope:** GenAI presales, demo and POC design, workflow integration, RFI/RFP, thought leadership, account expansion.
+
+---
+
+## System prompt
+
+> The deal is not the outcome. The customer's production deployment is the outcome. Every briefing, demo, and POC exists to earn the right to the next step — not to win the meeting.
+
+---
+
+## Career arc
+
+**Dell Technologies — BFSI Americas (2015–2023)**
+8 years in technical presales for the Americas FSI market. Progressed from Cloud Architect to Field CTO to Director of Presales, leading a globally distributed team of 10–12 FCTOs and Enterprise Architects across 40+ FSI accounts. The full presales motion — discovery, demo, reference architecture, POC, RFI/RFP response, deal negotiation, close, expansion — executed at $50M–$300M TCV scale. President's Club FY18 and FY20, 110%+ quota three consecutive years, up to 270% of target. Built the global sales framework and reference architecture standards that drove 25% NPS improvement and 95% customer retention.
+
+**SHI International — Global Presales (2024–2026)**
+Field CTO for global presales. Designed SHI's internal AI Lab from the ground up as a live reference environment to validate customer AI architectures and accelerate presales engagements. Delivered AI capability presentations covering use case development, AI infrastructure architecture, and real-world benchmarks. Led FSI AI advisory engagements from requirements through solution design.
+
+---
+
+## Core capabilities
+
+- Discovery to production: full presales motion from first call to signed contract to live deployment
+- POC design: scoping, success criteria, architecture, execution — POCs that convert
+- Workflow integration: mapping Moody's solutions to client analyst workflows and identifying integration points
+- RFI/RFP: technical narrative, reference architecture, differentiation — written to win
+- Multi-level translation: engineering depth, executive narrative, CFO/CISO framing — simultaneously, without losing accuracy
+- Thought leadership: executive briefings, white papers, event speaking, public-facing technical content
+- Account expansion: land and expand across BUs and geographies within anchor accounts
+
+---
+
+## Interfaces with
+\`tools/field_cto_translation\` · \`tools/enterprise_deal_architecture\` · \`tools/reference_architecture_factory\` · \`personas/fsi_resilience\` · \`personas/forward_synthesis\``
+},
+
+'enterprise-deal': {
+  title: 'enterprise_deal_architecture.md',
+  folder: 'tools/',
+  tag: 'tool · commercial execution',
+  tagClass: 'tag-tool',
+  subtitle: 'Structure and close $50M–$300M multi-stakeholder enterprise deals',
+  content: `## tools/enterprise_deal_architecture
+
+**Type:** Commercial execution capability
+**Purpose:** Structure and close complex, multi-stakeholder enterprise technology deals in regulated industries.
+
+---
+
+## What this tool does
+
+Enterprise technology deals in financial services are governance events. A $100M+ TCV deal at a G-SIB involves risk, legal, procurement, compliance, architecture review boards, and executive sponsors simultaneously. Each has a different definition of success. Each can kill the deal. This tool is the method for navigating that environment and closing.
+
+---
+
+## How it works
+
+**Technical architecture as the anchor**
+Every deal starts with a solution architecture that is defensible at every level — detailed enough for the architect, abstracted enough for the CFO, rigorous enough for the risk committee.
+
+**Stakeholder mapping and multi-threaded engagement**
+Identifying who has influence, who has veto, and who has budget — and running parallel tracks across technical, commercial, and executive relationships simultaneously.
+
+**RFI/RFP as a competitive instrument**
+Shaping requirements documentation to reflect genuine customer needs while ensuring the proposed solution maps precisely. Leading PoC designs that de-risk the decision for the customer while demonstrating capability advantage.
+
+**Partner and ecosystem orchestration**
+Coordinating across internal product teams, CTO organizations, and external ecosystem partners to deliver integrated solutions that no single party could close alone.
+
+---
+
+## Track record
+
+Eight years leading BFSI presales for the Americas at Dell — 40+ FSI hunting and farming accounts, deals from $50M to $300M TCV, quota attainment above 110% for three consecutive years. President's Club FY18 and FY20. Delivered up to 40% TCO reduction through integrated architecture.
+
+---
+
+## Interfaces with
+\`personas/fsi_resilience\` · \`tools/field_cto_translation\` · \`tools/reference_architecture_factory\``
+},
+
+'ref-arch-factory': {
+  title: 'reference_architecture_factory.md',
+  folder: 'tools/',
+  tag: 'tool · scalability',
+  tagClass: 'tag-tool',
+  subtitle: 'Convert one-off solutions into repeatable, institutionalized standards',
+  content: `## tools/reference_architecture_factory
+
+**Type:** Scalability capability
+**Purpose:** Convert one-off solutions into repeatable standards that scale across teams, accounts, and organizations.
+
+---
+
+## What this tool does
+
+A bespoke solution that only one person understands is a liability. A reference architecture that a team of 12 can execute consistently is a business asset. This tool is the method for taking a solution that worked once and engineering it into something that works every time.
+
+---
+
+## How it works
+
+**Pattern extraction** — After a successful engagement, identify what was generalizable. Separate what was specific to that customer from what applies universally.
+
+**Codification and documentation** — Translate the pattern into a documented standard: reference architecture diagrams, solution positioning, RFP response templates, PoC playbooks.
+
+**Enablement and dissemination** — A reference architecture that lives in one person's head is not a reference architecture. Build the enablement materials, train the team, establish the governance.
+
+**Continuous refinement** — Reference architectures decay. Build the feedback loops that keep standards current.
+
+---
+
+## Track record
+
+| Engagement | Standard created | Outcome |
+|---|---|---|
+| Dell BFSI Americas | Global sales framework + ref arch standards | 25% NPS improvement, 95% retention |
+| SHI International | Internal AI Lab as live reference environment | Accelerated presales across pharma + FSI |
+| JPMC | Automation pipeline standards | 200,000+ VM lifecycle at scale |
+| Lehman Brothers | Deployment automation standards | 30% reduction in build failures |
+| Wells Fargo | VM automation framework | 90,000+ VMs, 5 global data centers |
+
+---
+
+## Interfaces with
+\`personas/infra_orchestrator\` · \`personas/forward_synthesis\` · \`tools/field_cto_translation\` · \`rules/bell_labs_standard\``
+},
+
+'automation-pipeline': {
+  title: 'automation_pipeline_design.md',
+  folder: 'tools/',
+  tag: 'tool · engineering',
+  tagClass: 'tag-tool',
+  subtitle: 'Bell Labs → JPMC → GPU cluster — 30 years of automation at scale',
+  content: `## tools/automation_pipeline_design
+
+**Type:** Engineering capability
+**Purpose:** Design and implement automation pipelines that eliminate manual operational work at enterprise scale.
+
+---
+
+## What this tool does
+
+Manual operations do not scale. Every process that requires a human to execute the same sequence of steps more than twice is a defect waiting to be engineered out. This tool is the method — applied across 30 years and six organizations — for replacing human-executed operations with reliable, auditable, self-correcting automation.
+
+---
+
+## How it works
+
+**Process decomposition** — Break the manual process into atomic, testable steps. Identify inputs, outputs, failure modes, and audit requirements for each. A process that cannot be decomposed cannot be automated reliably.
+
+**Pipeline architecture** — Design the automation with defined stages, clear interfaces, and explicit error handling. Each stage produces machine-readable output the next stage can depend on.
+
+**Observability by design** — Every pipeline action produces a log entry. Every failure produces a structured alert. Every completion produces a signed audit record.
+
+**Idempotency and safe re-execution** — Every step is designed to be safely re-runnable. Executing a step twice produces the same result as executing it once.
+
+---
+
+## 30-year track record
+
+| Organization | Automation delivered | Scale |
+|---|---|---|
+| Bell Labs | Network management software modernization | Carrier scale |
+| Lehman Brothers | Global deployment automation | 30% reduction in build failures |
+| Wells Fargo | VM lifecycle automation | 90,000+ VMs · 5 global data centers |
+| JPMC | Provisioning, patching, lifecycle management | 5,000+ servers · 200,000+ VMs |
+| KPMG | CI/CD app delivery pipeline (Jenkins) | 70% faster provisioning |
+| SHI / Independent | Multi-agent GPU cluster validation | 2-minute end-to-end audit |
+
+---
+
+## Interfaces with
+\`personas/infra_orchestrator\` · \`personas/forward_synthesis\` · \`rules/automation_is_the_mission\` · \`rules/bell_labs_standard\``
+},
+
+'det-ai-validation': {
+  title: 'deterministic_ai_validation.md',
+  folder: 'tools/',
+  tag: 'tool · AI quality',
+  tagClass: 'tag-tool',
+  subtitle: 'Eliminate hallucination from production AI in regulated environments',
+  content: `## tools/deterministic_ai_validation
+
+**Type:** AI quality and compliance capability
+**Purpose:** Ensure AI-generated outputs are verifiable, attributable, and auditable in regulated production environments.
+
+---
+
+## The core insight
+
+Hallucination is not a model property to be accepted. It is a systems failure to be designed out. The model is one component in a pipeline. The pipeline is responsible for verification. This conviction — that non-determinism is a defect — has been the engineering posture across every AI system built.
+
+---
+
+## How it works
+
+**Typed data contracts** — AI outputs are structured, typed objects with defined schemas — not free text. Every field is an explicit contract. Downstream systems can depend on the structure without parsing natural language.
+
+**Parallel claim verification** — Factual claims are extracted and independently verified against a grounded corpus before delivery. Claims that cannot be attributed to a source are flagged, softened, or rejected. Verification runs in parallel with generation.
+
+**Groundedness scoring** — Every output receives a groundedness score: the proportion of verifiable, attributed claims. Outputs below threshold are routed for human review.
+
+**Source attribution** — Every factual claim carries a provenance record: which document, which section, which retrieval event produced it. This is the audit trail that makes the system defensible to a risk committee.
+
+---
+
+## Track record
+
+- **RAG pipeline → enterprise agentic RAG**: v1 established typed data contracts, parallel claim verification, hallucination detection, and automatic PDF report generation; v2 rebuilt on LangGraph with a reasoning agent dynamically orchestrating retrieval, synthesis, governance, and clarification
+- **Autonomous investment research system**: deterministic validation layers applied to multi-source signal synthesis
+- **Multi-agent GPU cluster validator**: deterministic physics calculations replacing probabilistic inference for facility analysis
+
+---
+
+## Interfaces with
+\`personas/forward_synthesis\` · \`personas/fsi_resilience\` · \`tools/reference_architecture_factory\``
+},
+
+'field-cto': {
+  title: 'field_cto_translation.md',
+  folder: 'tools/',
+  tag: 'tool · communication',
+  tagClass: 'tag-tool',
+  subtitle: 'Translate deep technical architecture into executive decisions and commercial momentum',
+  content: `## tools/field_cto_translation
+
+**Type:** Communication and leadership capability
+**Purpose:** Translate deep technical architecture into executive decisions, customer confidence, and commercial momentum.
+
+---
+
+## What this tool does
+
+Technical depth without communication reach is a private asset. This tool is the method for making complex architecture legible — to a CISO, a CFO, a board, a customer, or a team of 12 FCTOs executing the same playbook across 40 accounts.
+
+---
+
+## The core challenge
+
+A Tier-1 FSI technology decision involves people who care about very different things simultaneously. The infrastructure architect wants to know if it will work. The CISO wants to know if it is safe. The CFO wants to know what it costs and returns. The CTO wants to know if it is the right direction. The same solution must speak to all of them — without losing technical accuracy for any of them.
+
+---
+
+## How it works
+
+**Layered narrative design** — A single solution expressed at multiple levels of abstraction simultaneously: architectural diagram for the engineer, outcome story for the executive, TCO model for the CFO, risk posture for the CISO. Each layer consistent with the others — not simplified, but translated.
+
+**Live reference as proof** — At SHI, this meant building the AI Lab so customer conversations happened in front of running systems, not slides. The lab answered customer questions in real time.
+
+**POC design and co-creation** — Designing and executing proof-of-concept projects that demonstrate value and technical feasibility within the customer's own environment. At SHI, this meant working alongside FSI and pharma client teams — not just presenting architecture, but building it with them across three production use cases. Co-presenting with client leadership at their internal cloud summits, and running annual executive briefings for major FSI accounts, are extensions of the same motion: the customer trusts you enough to put you in front of their own people.
+
+**Benchmark-grounded presentations** — AI capability presentations built on real workloads written by SHI's dev team — not vendor benchmarks. When a customer asks "how fast is it," the answer is a measured result from a workload that resembles theirs.
+
+**Team enablement at scale** — Building the frameworks and playbooks that allow 10–12 FCTOs and Enterprise Architects to deliver consistent, high-quality customer conversations across 40+ accounts.
+
+---
+
+## Track record
+
+- Field CTO at Dell BFSI and SHI International — the role whose primary function is this translation
+- Global sales framework at Dell: 25% NPS improvement, 95% customer retention
+- SHI AI Lab: replaced slide-based selling with demonstrated, running architecture
+- President's Club FY18 and FY20 — the commercial outcome of translation that works
+
+---
+
+## Interfaces with
+\`personas/fsi_resilience\` · \`personas/forward_synthesis\` · \`tools/enterprise_deal_architecture\` · \`tools/reference_architecture_factory\``
+},
+
+'skill-fsi': {
+  title: 'fsi_architecture.md',
+  folder: 'skills/',
+  tag: 'skill · financial services',
+  tagClass: 'tag-skill',
+  subtitle: 'Technical inventory — regulatory · infrastructure · deal mechanics',
+  content: `## skills/fsi_architecture
+
+**Type:** Technical reference — FSI domain knowledge inventory
+
+---
+
+## Regulatory and Compliance
+- SOX, DORA, Basel III, GDPR — technology design implications
+- Model risk management (MRM) — what it takes to get an AI system through MRM review
+- Audit trail design for AI-generated outputs
+- Data residency and jurisdictional requirements
+- Access controls at the retrieval layer (not just application layer)
+
+## AI in Regulated FSI Environments
+- Governance verdicts and audit IDs for every AI output
+- Source attribution requirements for compliance teams
+- Hallucination controls for credit, risk, and compliance use cases
+- Text-to-SQL with row-level security enforcement
+- RAG-based fraud detection (AML, KYC, SAR typology corpora)
+
+## Cloud and Infrastructure
+- Azure, AWS, VMware — public, hybrid, sovereign cloud patterns
+- Cloud repatriation — Azure-to-on-premises for data sovereignty and TCO
+- HA and DR design to G-SIB business continuity requirements
+- Low-latency networking and market data infrastructure
+
+## Deal and Procurement Mechanics
+- G-SIB technology procurement cycle — risk, legal, compliance, ARB, executive sponsor
+- RFI / RFP leadership and PoC design
+- Multi-stakeholder navigation — CTO, CISO, CFO, CRO simultaneously
+- TCO modelling and business case construction for $50M–$300M decisions
+
+## Institutions
+Lehman Brothers · JP Morgan Chase · Wells Fargo · Dell BFSI Americas (40+ FSI accounts) · SHI FSI AI advisory`
+},
+
+'skill-genai': {
+  title: 'genai_solution_development.md',
+  folder: 'skills/',
+  tag: 'skill · GenAI development',
+  tagClass: 'tag-skill',
+  subtitle: 'Technical inventory — frameworks · patterns · deployment',
+  content: `## skills/genai_solution_development
+
+**Type:** Technical reference — what I can build and operate
+
+---
+
+## Orchestration
+- LangGraph — state machine design, conditional routing, AgentState, add_messages reducer
+- LangChain — tool binding, message handling, LLM abstraction
+- Multi-agent orchestration — parallel execution, tool calling, dynamic routing
+
+## Retrieval
+- Hybrid search — BM25, TF-IDF, dense embeddings, Reciprocal Rank Fusion (RRF)
+- Embedding models — nomic-embed-text, all-MiniLM-L6-v2, text-embedding-3-small
+- Document parsing — layout-aware PDF extraction (pymupdf, pdfplumber), structure-preserving chunking
+- Retrieval tuning — TOP_K, chunk size/overlap, MIN_SCORE, dense weight balancing
+
+## LLM Backends
+- Anthropic Claude (claude-sonnet-4-6, claude-opus-4-6)
+- Ollama — local model serving (llama3.1, qwen2.5, mistral)
+- OpenAI (gpt-4o, gpt-4o-mini)
+- Pluggable backend pattern — swap via .env, zero code changes
+
+## Inference Serving
+- vLLM — high-throughput inference, continuous batching
+- NVIDIA TensorRT-LLM — optimised inference on H100/H200
+- Triton Inference Server — multi-model serving, ensemble pipelines
+- Model quantisation — INT8 / FP8 for inference efficiency
+
+## Validation and Governance
+- Typed data contracts — structured outputs, defined schemas
+- Claim extraction and word-overlap verification
+- Grounding scores, source attribution, audit trail (SHA-256 audit IDs)
+- Governance verdicts — APPROVED / FLAGGED / REJECTED with configurable thresholds
+
+## Languages and Tools
+- Python — primary language across all AI systems
+- MCP (Model Context Protocol) — decoupled tool servers
+- ThreadPoolExecutor — parallel batch execution
+- pytest, logging (structured, dual-handler)
+
+## Verticals delivered
+FSI · Pharma · Manufacturing · Legal`
+},
+
+'skill-ai-infra': {
+  title: 'ai_infrastructure.md',
+  folder: 'skills/',
+  tag: 'skill · AI infrastructure',
+  tagClass: 'tag-skill',
+  subtitle: 'Technical inventory — GPU · networking · inference · data centre',
+  content: `## skills/ai_infrastructure
+
+**Type:** Technical reference — AI and data centre infrastructure inventory
+
+---
+
+## GPU Compute
+- NVIDIA DGX H100 / H200 / A100 — system architecture, deployment patterns
+- BasePOD reference design — scalability, rack configuration, power/cooling
+- NVIDIA-Certified Associate: AI Infrastructure and Operations
+- NVIDIA AI Advisor — Technical Sales
+
+## High-Speed Interconnect
+- InfiniBand — NDR/HDR topology design, fabric validation, benchmarking
+- NVLink / NVSwitch — multi-GPU communication within and across nodes
+- RDMA configuration and performance tuning
+
+## Inference Serving
+- vLLM — continuous batching, high-throughput serving
+- NVIDIA TensorRT-LLM — INT8 / FP8 quantisation, optimised H100 inference
+- Triton Inference Server — multi-model, ensemble pipelines
+- Kubernetes for ML workloads — GPU scheduling, resource quotas
+
+## Storage for AI
+- NVMe namespace allocation
+- Parallel filesystem selection and tuning (GPFS, Lustre, WekaFS)
+- Checkpoint and dataset pipeline optimisation
+
+## Data Centre Architecture
+- Compute, storage, networking, power and cooling at enterprise scale
+- HA and DR design — G-SIB and regulated-industry requirements
+- Cyber resiliency architecture
+
+## Automation and Virtualisation
+- VMware vSphere — 200,000+ VM lifecycle management (JPMC)
+- Jenkins CI/CD — application delivery pipelines
+- Provisioning and patching automation at enterprise scale
+- 90,000+ VMs across 5 global data centres (Wells Fargo)`
+},
+
+'skill-ent-arch': {
+  title: 'enterprise_architecture.md',
+  folder: 'skills/',
+  tag: 'skill · enterprise architecture',
+  tagClass: 'tag-skill',
+  subtitle: 'Technical inventory — cloud · modernisation · data · commercial',
+  content: `## skills/enterprise_architecture
+
+**Type:** Technical reference — enterprise architecture and commercial execution inventory
+
+---
+
+## Cloud and Infrastructure Strategy
+- Multicloud architecture — AWS, Azure, GCP, VMware hybrid
+- Sovereign cloud design — jurisdiction, data residency, regulatory constraints
+- Cloud repatriation — Azure-to-on-premises for TCO and data sovereignty
+- HCI (hyperconverged infrastructure), SDS (software-defined storage)
+
+## Application Modernisation
+- Legacy-to-cloud migration strategy and execution
+- Containerisation — Docker, Kubernetes
+- Microservices architecture and decomposition
+- CI/CD pipelines — Jenkins, GitOps patterns
+- 75% faster workload provisioning (KPMG hybrid-cloud IaaS programme)
+
+## Data Modernisation
+- Enterprise data platform architecture
+- Text-to-SQL — natural language access to structured financial data
+- Data governance, lineage, and entitlement enforcement
+- AI-ready data pipeline design
+
+## Reference Architecture and Enablement
+- Pattern extraction — bespoke engagement → repeatable standard
+- RFP / RFI response templates, PoC playbooks
+- Team enablement at scale — 10–12 FCTOs and Enterprise Architects
+- Global sales framework design
+
+## Commercial and Executive Engagement
+- TCO modelling — delivered up to 40% reduction through integrated architecture
+- C-suite engagement — CTO, CISO, CFO, CRO simultaneously
+- Executive briefings and trusted advisor programmes
+- PoC design and co-creation inside customer environments`
+},
+
+'rule-automation': {
+  title: 'automation_is_the_mission.md',
+  folder: 'rules/',
+  tag: 'rule · axiom',
+  tagClass: 'tag-rule',
+  subtitle: 'Cloud and AI are the apex of infrastructure evolution — not a departure from it',
+  content: `## rules/automation_is_the_mission
+
+**Type:** Operating axiom
+**Scope:** Every infrastructure and architecture decision
+
+---
+
+## The rule
+
+Cloud and AI are not departures from infrastructure engineering. They are its highest expression. Every abstraction layer — from the first shell script to a LangGraph orchestration node — exists to remove human effort from repeatable work and redirect it toward problems that actually require human judgment.
+
+This is not a philosophy adopted recently. It is the throughline of 30 years of engineering, from automating network provisioning at Bell Labs to building the pipelines that stand up AI Labs and validate GPU clusters in under two minutes.
+
+---
+
+## What this means in practice
+
+**Every manual process is a defect waiting to be fixed.**
+If a human is doing something the same way more than twice, that process belongs in code. This applies to infrastructure deployment, data ingestion, model validation, and audit reporting equally.
+
+**Automation is the architecture, not a feature.**
+Systems that require manual intervention to operate at scale are not production systems — they are prototypes with an operational tax. Production systems are designed so that scale does not require proportional human effort.
+
+**The goal is not efficiency — it is leverage.**
+Automation creates leverage: the ability to do more consequential work with the same or fewer people. The right question is never "how do we make this faster" but "how do we make this not require a human at all."
+
+---
+
+## What this does not mean
+
+Automation is not a substitute for judgment. The rules and constraints that govern what gets automated — the compliance requirements, the risk thresholds, the validation criteria — require human expertise to define. Automation executes within those constraints. It does not replace the engineering thinking that sets them.`
+},
+
+'rule-belllabs': {
+  title: 'bell_labs_standard.md',
+  folder: 'rules/',
+  tag: 'rule · axiom',
+  tagClass: 'tag-rule',
+  subtitle: 'Everything ships modular, documented, and auditable — no exceptions',
+  content: `## rules/bell_labs_standard
+
+**Type:** Engineering axiom
+**Scope:** Every deliverable — from a DNS script to a production AI pipeline
+
+---
+
+## The rule
+
+Everything ships modular, documented, and auditable. This is non-negotiable regardless of time pressure, scope, or the apparent simplicity of the task.
+
+The name is deliberate. Bell Labs produced Unix, C, the transistor, and the laser — not because its engineers were smarter than everyone else, but because they applied engineering discipline to every problem, at every scale, without exception. A system that works but cannot be understood, modified, or verified by someone other than its author is not a system — it is a liability.
+
+---
+
+## What this requires
+
+**Modular** — Every component has a single, well-defined responsibility. It receives inputs of a defined type and produces outputs of a defined type. It can be tested in isolation. It can be replaced without rewriting the system around it.
+
+**Documented** — The intent of a component is captured at the time it is written. Documentation answers three questions: what does this do, why does it exist, and what are its constraints. If those three questions cannot be answered in plain language, the component is not yet understood well enough to ship.
+
+**Auditable** — Every consequential action produces a record. In infrastructure: what was deployed, when, by what process, in what state. In AI pipelines: what source was retrieved, what claim was made, what verification was applied, what output was delivered.
+
+---
+
+## Why this matters in AI systems
+
+The temptation in AI development is to treat the model as a black box and the surrounding system as scaffolding. This is the path to non-reproducible results, undebuggable failures, and systems that cannot pass a compliance review.
+
+The Bell Labs standard applied to AI means: every component in the pipeline — retrieval, validation, generation, output formatting — is modular, documented, and auditable. The model is one component in that pipeline, not the whole system.`
+},
+
+'profile-credentials': {
+  title: 'credentials.md',
+  folder: 'profile/',
+  tag: 'profile · credentials',
+  tagClass: 'tag-profile',
+  subtitle: 'Certifications and education',
+  content: `## profile/credentials.md
+
+---
+
+## Certifications
+
+**NVIDIA-Certified Associate: AI Infrastructure and Operations**
+NVIDIA · Active
+
+**NVIDIA AI Advisor — Technical Sales**
+NVIDIA · Active
+
+---
+
+## Education
+
+**M.S., Computer Science & Engineering**
+National Institute of Technology, Warangal, India · 1994–1996
+
+**B.E., Electronics & Communications Engineering**
+College of Engineering, Osmania University, Hyderabad, India · 1988–1992
+
+---
+
+## Contact
+
+Princeton Junction, NJ
+[LinkedIn — Srikanth Samudrla](https://www.linkedin.com/in/srikanthsamudrla/)`
+},
+
+'profile-summary': {
+  title: 'executive_summary.md',
+  folder: 'profile/',
+  tag: 'profile · summary',
+  tagClass: 'tag-profile',
+  subtitle: 'The 60-second version',
+  content: `## profile/executive_summary.md
+
+---
+
+Field CTO and Technical Presales Leader with senior-level expertise in enterprise AI infrastructure and financial services.
+
+30 years of engineering and commercial leadership — from Bell Labs network software to NVIDIA DGX BasePOD cluster design and production agentic AI systems. Proven record delivering $50M–$300M AI-focused deals, building AI labs, and designing production-grade agentic AI systems using LangGraph, Python, and Anthropic Claude.
+
+Deep knowledge of GPU clusters, RAG pipelines, and data-center architecture that enable scalable AI inference. 19+ years in financial services — from Engineering Manager inside JPMC to Director of BFSI Presales at Dell, driving the commercial and technical strategy that closed some of the largest FSI infrastructure deals in the Americas.
+
+Seeking to apply this experience to accelerate AI adoption and drive measurable business outcomes for enterprise customers — specifically in environments where the stakes of AI failure are systemic, and where the difference between a working system and a production system is compliance, auditability, and determinism.`
+}
+
+};
+
+// ── UI logic ──────────────────────────────────────────────────
+
+function toggleFolder(label) {
+  const icon = label.querySelector('.folder-icon');
+  const children = label.nextElementSibling;
+  if (!children) return;
+  const isOpen = children.classList.contains('open');
+  children.classList.toggle('open', !isOpen);
+  icon.classList.toggle('open', !isOpen);
+}
+
+function openFolder(name) {
+  // Find and open the corresponding folder in the tree
+  const labels = document.querySelectorAll('.tree-folder-label');
+  labels.forEach(label => {
+    const text = label.textContent.trim();
+    const map = { agents: 'personas/', tools: 'tools/', skills: 'skills/', rules: 'rules/', claude: '.claude/', profile: 'profile/' };
+    if (text.startsWith(map[name])) {
+      const children = label.nextElementSibling;
+      const icon = label.querySelector('.folder-icon');
+      if (children && !children.classList.contains('open')) {
+        children.classList.add('open');
+        icon.classList.add('open');
+      }
+    }
+  });
+}
+
+function showFile(key) {
+  const file = FILES[key];
+  if (!file) return;
+
+  // update active state in tree
+  document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  // breadcrumb
+  const bc = document.getElementById('breadcrumb');
+  bc.innerHTML = `<span class="breadcrumb-part">sri-system</span>
+    <span class="breadcrumb-sep">/</span>
+    <span class="breadcrumb-part">${file.folder}</span>
+    ${file.folder !== 'sri-system/' ? '<span class="breadcrumb-sep">/</span>' : ''}
+    <span class="breadcrumb-current">${file.title}</span>`;
+
+  // hide welcome, show file view
+  document.getElementById('welcome-view').style.display = 'none';
+  const fv = document.getElementById('file-view');
+  fv.style.display = 'block';
+
+  // header
+  document.getElementById('file-header').innerHTML = `
+    <div class="file-type-tag">
+      <span class="badge ${file.tagClass}">${file.tag}</span>
+    </div>
+    <div class="file-title">${file.title}</div>
+    <div class="file-subtitle">${file.subtitle}</div>
+  `;
+
+  // content
+  const contentEl = document.getElementById('file-content');
+  if (file.isJson) {
+    contentEl.innerHTML = `<pre><code class="json-view">${file.content}</code></pre>`;
+  } else {
+    contentEl.innerHTML = renderMd(file.content);
+  }
+
+  // scroll to top
+  document.getElementById('content-area').scrollTop = 0;
+}
+
+function renderMd(text) {
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    // code blocks first
+    .replace(/```[\w]*\n?([\s\S]*?)```/g, (_, c) => `<pre><code>${c.trim()}</code></pre>`)
+    // headings
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // ensure paragraph text after a heading is always a separate block
+    .replace(/(<\/h[123]>)\n([^\n])/g, '$1\n\n$2')
+    // bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // inline code
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    // hr
+    .replace(/^---$/gm, '<hr>')
+    // tables
+    .replace(/^\|(.+)\|$/gm, (line) => line)
+    // links
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    // blockquotes
+    .replace(/^&gt; (.+)$/gm, '<blockquote><p>$1</p></blockquote>')
+    // list items
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`)
+    // paragraphs (double newline)
+    .split(/\n\n+/).map(block => {
+      block = block.trim();
+      if (!block) return '';
+      if (/^<(h[123]|ul|ol|pre|blockquote|hr|table)/.test(block)) return block;
+      if (/^<li>/.test(block)) return block;
+      return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+    }).join('\n');
+
+  // simple table rendering
+  html = html.replace(/(&lt;table-placeholder&gt;[\s\S]*?&lt;\/table-placeholder&gt;)/g, '$1');
+
+  // handle inline tables (lines with |)
+  const lines = html.split('\n');
+  let out = [], inTable = false, tableLines = [];
+  for (const line of lines) {
+    const raw = line.replace(/<[^>]+>/g, '').trim();
+    if (raw.startsWith('|') && raw.endsWith('|')) {
+      inTable = true;
+      tableLines.push(line);
+    } else {
+      if (inTable) {
+        out.push(buildTable(tableLines));
+        tableLines = [];
+        inTable = false;
+      }
+      out.push(line);
+    }
+  }
+  if (inTable) out.push(buildTable(tableLines));
+  return out.join('\n');
+}
+
+function buildTable(lines) {
+  const rows = lines.map(l => l.replace(/<[^>]+>/g, '').trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim()));
+  if (rows.length < 2) return lines.join('\n');
+  let t = '<table>';
+  t += '<tr>' + rows[0].map(c => `<th>${c}</th>`).join('') + '</tr>';
+  for (let i = 2; i < rows.length; i++) {
+    if (rows[i].every(c => !c || /^[-:]+$/.test(c))) continue;
+    t += '<tr>' + rows[i].map(c => `<td>${c}</td>`).join('') + '</tr>';
+  }
+  return t + '</table>';
+}
+
+// open all folders by default for discoverability
+window.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.tree-folder-label').forEach(label => {
+    const children = label.nextElementSibling;
+    const icon = label.querySelector('.folder-icon');
+    if (children && children.classList.contains('tree-children')) {
+      children.classList.add('open');
+      if (icon) icon.classList.add('open');
+    }
+  });
+});
+</script>
+</body>
+</html>
