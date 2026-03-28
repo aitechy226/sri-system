@@ -450,6 +450,8 @@
     .sidebar.open { transform: translateX(0); }
 
     .content-area { padding: 20px 18px calc(48px + env(safe-area-inset-bottom)); }
+    .desktop-hint { display: none !important; }
+    .mobile-hint { display: block !important; }
 
     .welcome-name { font-size: 22px; }
     .welcome-summary { font-size: 14px; padding-left: 14px; }
@@ -660,7 +662,8 @@
           </div>
         </div>
 
-        <p style="font-size:12px;color:var(--text3);font-family:var(--mono);">← Select any file in the explorer to read it</p>
+        <p class="desktop-hint" style="font-size:12px;color:var(--text3);font-family:var(--mono);">← Select any file in the explorer to read it</p>
+        <p class="mobile-hint" style="font-size:12px;color:var(--text3);font-family:var(--mono);display:none;">☰ Tap the menu (top left) to browse files</p>
       </div>
 
       <!-- file view (hidden until file selected) -->
@@ -1603,20 +1606,24 @@ function toggleFolder(label) {
 }
 
 function openFolder(name) {
-  // Find and open the corresponding folder in the tree
   const labels = document.querySelectorAll('.tree-folder-label');
+  const map = { agents: 'personas/', tools: 'tools/', skills: 'skills/', rules: 'rules/', claude: '.claude/', profile: 'profile/' };
   labels.forEach(label => {
     const text = label.textContent.trim();
-    const map = { agents: 'personas/', tools: 'tools/', skills: 'skills/', rules: 'rules/', claude: '.claude/', profile: 'profile/' };
     if (text.startsWith(map[name])) {
       const children = label.nextElementSibling;
       const icon = label.querySelector('.folder-icon');
       if (children && !children.classList.contains('open')) {
         children.classList.add('open');
-        icon.classList.add('open');
+        if (icon) icon.classList.add('open');
       }
     }
   });
+  // on mobile, open the sidebar so the user can see the file tree
+  if (window.innerWidth <= 768) {
+    document.querySelector('.sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('open');
+  }
 }
 
 function toggleSidebar() {
