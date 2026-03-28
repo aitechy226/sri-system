@@ -19,6 +19,8 @@
     --text3: #9a9890;
     --accent: #1a1917;
     --accent-soft: #f0efe9;
+    --bg-code: #adc5e8;
+    --border-code: #6a96cc;
     --tag-agent: #e8f0fb;
     --tag-agent-text: #1a4a8a;
     --tag-tool: #fef3e2;
@@ -300,8 +302,8 @@
   }
 
   .folder-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
+    background: var(--bg-code);
+    border: 1px solid var(--border-code);
     border-radius: var(--radius);
     padding: 14px 16px;
     cursor: pointer;
@@ -309,8 +311,8 @@
   }
 
   .folder-card:hover {
-    border-color: var(--border2);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-color: #8aaedc;
+    box-shadow: 0 2px 8px rgba(26,58,106,0.08);
   }
 
   .folder-card-name {
@@ -325,7 +327,7 @@
 
   .folder-card-desc {
     font-size: 11.5px;
-    color: var(--text3);
+    color: #0d2545;
     line-height: 1.5;
   }
 
@@ -376,15 +378,15 @@
   .md a { color: var(--tag-agent-text); text-decoration: none; border-bottom: 1px solid currentColor; }
   .md a:hover { opacity: 0.75; }
   .md strong { font-weight: 500; color: var(--text); }
-  .md code { font-family: var(--mono); font-size: 12px; background: var(--bg3); padding: 1px 5px; border-radius: 3px; color: var(--text); }
-  .md pre { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin: 16px 0; overflow-x: auto; }
-  .md pre code { background: none; padding: 0; font-size: 12px; line-height: 1.6; }
-  .md blockquote { border-left: 3px solid var(--border2); padding: 10px 18px; margin: 16px 0; background: var(--bg3); border-radius: 0 var(--radius) var(--radius) 0; }
-  .md blockquote p { color: var(--text2); font-style: italic; margin: 0; font-size: 14px; }
+  .md code { font-family: var(--mono); font-size: 12px; background: var(--bg-code); padding: 1px 5px; border-radius: 3px; color: #0d2545; }
+  .md pre { background: var(--bg-code); border: 1px solid var(--border-code); border-radius: var(--radius); padding: 16px; margin: 16px 0; overflow-x: auto; }
+  .md pre code { background: none; padding: 0; font-size: 12px; line-height: 1.6; color: #0d2545; }
+  .md blockquote { border-left: 3px solid var(--border-code); padding: 10px 18px; margin: 16px 0; background: var(--bg-code); border-radius: 0 var(--radius) var(--radius) 0; }
+  .md blockquote p { color: #0d2545; font-style: italic; margin: 0; font-size: 14px; }
   .md table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
-  .md th { text-align: left; padding: 8px 12px; background: var(--bg3); border: 1px solid var(--border); font-weight: 500; font-size: 12px; color: var(--text); }
+  .md th { text-align: left; padding: 8px 12px; background: var(--bg-code); border: 1px solid var(--border-code); font-weight: 500; font-size: 12px; color: #0d2545; }
   .md td { padding: 8px 12px; border: 1px solid var(--border); color: var(--text2); line-height: 1.6; font-size: 14px; }
-  .md tr:nth-child(even) td { background: var(--bg3); }
+  .md tr:nth-child(even) td { background: var(--bg-code); }
 
   /* JSON rendering */
   .json-view { font-family: var(--mono); font-size: 13px; line-height: 1.7; }
@@ -414,7 +416,7 @@
 
 <header>
   <div class="header-left">
-    <div class="repo-name"><span>~/</span>sri-system</div>
+    <div class="repo-name" onclick="showWelcome()" style="cursor:pointer;" title="Back to home"><span>~/</span>sri-system</div>
     <div class="header-meta">17 files · 6 directories</div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
@@ -564,31 +566,31 @@
             <div class="folder-card-name">
               <span class="badge tag-claude" style="font-size:10px;padding:1px 6px;">.claude/</span>
             </div>
-            <div class="folder-card-desc">Operating defaults, memory</div>
+            <div class="folder-card-desc">Settings, memory, engagement principles</div>
           </div>
           <div class="folder-card" onclick="openFolder('agents')">
             <div class="folder-card-name">
               <span class="badge tag-agent" style="font-size:10px;padding:1px 6px;">personas/</span>
             </div>
-            <div class="folder-card-desc">Three personas — Intelligence, Domain Authority, Foundation</div>
+            <div class="folder-card-desc">Four operating modes — Technical Presales, AI Architecture, FSI Authority, Infrastructure</div>
           </div>
           <div class="folder-card" onclick="openFolder('tools')">
             <div class="folder-card-name">
               <span class="badge tag-tool" style="font-size:10px;padding:1px 6px;">tools/</span>
             </div>
-            <div class="folder-card-desc">Five durable capabilities applied across every role for 30 years</div>
+            <div class="folder-card-desc">Five durable capabilities — from $300M deal architecture to deterministic AI validation</div>
           </div>
           <div class="folder-card" onclick="openFolder('skills')">
             <div class="folder-card-name">
               <span class="badge tag-skill" style="font-size:10px;padding:1px 6px;">skills/</span>
             </div>
-            <div class="folder-card-desc">Deep domain fluency — GenAI development, FSI, AI infrastructure, enterprise architecture</div>
+            <div class="folder-card-desc">Technical inventory — GenAI, FSI architecture, AI infrastructure, enterprise platforms</div>
           </div>
           <div class="folder-card" onclick="openFolder('rules')">
             <div class="folder-card-name">
               <span class="badge tag-rule" style="font-size:10px;padding:1px 6px;">rules/</span>
             </div>
-            <div class="folder-card-desc">Two engineering axioms that have never changed in 30 years</div>
+            <div class="folder-card-desc">Two axioms unchanged in 30 years — automation is the mission, Bell Labs standard</div>
           </div>
           <div class="folder-card" onclick="openFolder('profile')">
             <div class="folder-card-name">
@@ -1557,13 +1559,24 @@ function openFolder(name) {
   });
 }
 
-function showFile(key) {
+function showWelcome() {
+  document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
+  document.getElementById('welcome-view').style.display = 'block';
+  document.getElementById('file-view').style.display = 'none';
+  history.pushState(null, '', location.pathname);
+}
+
+function showFile(key, pushState = true) {
   const file = FILES[key];
   if (!file) return;
 
   // update active state in tree
   document.querySelectorAll('.tree-file').forEach(f => f.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+  const el = document.querySelector(`[onclick="showFile('${key}')"]`);
+  if (el) el.classList.add('active');
+
+  // update URL hash
+  if (pushState) history.pushState(null, '', '#' + key);
 
   // breadcrumb
   const bc = document.getElementById('breadcrumb');
@@ -1680,6 +1693,20 @@ window.addEventListener('DOMContentLoaded', () => {
       if (icon) icon.classList.add('open');
     }
   });
+
+  // load from hash on initial page load
+  const hash = location.hash.slice(1);
+  if (hash && FILES[hash]) showFile(hash, false);
+});
+
+// handle browser back / forward
+window.addEventListener('popstate', () => {
+  const hash = location.hash.slice(1);
+  if (hash && FILES[hash]) {
+    showFile(hash, false);
+  } else {
+    showWelcome();
+  }
 });
 </script>
 </body>
