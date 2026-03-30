@@ -511,83 +511,76 @@ technical_presales persona
   <div class="coaching">Three-part structure: (1) reframe what the LLM is actually doing — not generating ratings, surfacing evidence, (2) the explainability answer is in the audit trail — grounding score, verdict, audit ID, (3) cultural fix is making audit a co-designer not a gate. The JPMC line at the end grounds it in real experience, not theory.</div>
 </div>
 
-<h2>System Reference — Enterprise RAG Architecture</h2>
+<h2>System Reference — Enterprise RAG with LangGraph</h2>
 <div style="background:#f7f7f5;padding:20px 24px;border-radius:4px;font-size:14px;line-height:1.8;">
 
   <strong>What It Is</strong><br>
-  Enterprise RAG with Agentic Orchestration — a production-grade Retrieval-Augmented Generation system built on LangGraph, using a ReAct-style Claude agent to dynamically orchestrate tool calls across multi-domain enterprise corpora.<br><br>
+  An enterprise Retrieval-Augmented Generation system that answers natural-language queries against multi-domain knowledge bases (Financial Services, Pharma, Legal, Manufacturing). Built on LangGraph with a two-model architecture and graph-enforced quality guarantees.<br><br>
 
   <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
-  <strong>Architecture</strong><br><br>
-
-  <strong>Two-Model Design</strong><br>
+  <strong>Two-Model Architecture</strong><br>
   <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;">
     <thead>
       <tr style="background:#e8e8e8;">
         <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Role</th>
         <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Config</th>
-        <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Purpose</th>
+        <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Responsibility</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td style="padding:8px 12px;border:1px solid #ccc;">Reasoning Agent</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">Reasoning agent</td>
         <td style="padding:8px 12px;border:1px solid #ccc;">AGENT_BACKEND / AGENT_MODEL (Claude)</td>
-        <td style="padding:8px 12px;border:1px solid #ccc;">Decides which tools to call, evaluates evidence quality, routes retries</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">Corpus selection, query strategy, final answer prose</td>
       </tr>
-      <tr style="background:#f7f7f5;">
+      <tr style="background:#f0f0f0;">
         <td style="padding:8px 12px;border:1px solid #ccc;">Synthesis LLM</td>
-        <td style="padding:8px 12px;border:1px solid #ccc;">LLM_BACKEND / LLM_MODEL (Ollama/OpenAI)</td>
-        <td style="padding:8px 12px;border:1px solid #ccc;">Generates grounded answers strictly from retrieved passages</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">LLM_BACKEND / LLM_MODEL (Ollama / OpenAI)</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">Grounded answer generation from retrieved passages only</td>
       </tr>
     </tbody>
   </table>
-
-  <strong>LangGraph Graph</strong>
-  <pre style="background:#efefef;padding:12px;border-radius:4px;font-size:13px;line-height:1.6;margin:8px 0;">START → agent_node → [route_agent] → tool_executor_node → (loop back)
-                           ↓
-                          END
-route_agent exits on: clarification flag, message limit, max search attempts, or no tool calls.</pre>
-
-  <strong>Tool Chain (per query)</strong>
-  <ol style="margin:8px 0;padding-left:20px;font-size:13px;line-height:2;">
-    <li><strong>search_documents</strong> — HybridRetriever (BM25 + TF-IDF + dense embeddings, RRF fusion) → returns opaque evidence_json</li>
-    <li><strong>synthesize_answer</strong> — SynthesisAgent calls synthesis LLM with evidence block → returns opaque synthesis_json</li>
-    <li><strong>verify_answer</strong> — GovernanceAgent checks claim grounding score against evidence → APPROVED / FLAGGED / REJECTED</li>
-    <li><strong>ask_clarification</strong> — exits the graph if query is unresolvable</li>
-  </ol>
-  If FLAGGED, the agent re-searches for unverified claims and re-synthesizes (up to MAX_RESYNTHESIS_ATTEMPTS).<br><br>
+  The reasoning agent is a strategist — it never generates answer content. The synthesis LLM is constrained by a strict system prompt to produce answers solely from retrieved evidence.<br><br>
 
   <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
 
-  <strong>Domain Coverage (Corpora)</strong>
+  <strong>Graph Topology</strong>
+  <pre style="background:#efefef;padding:12px;border-radius:4px;font-size:13px;line-height:1.8;margin:8px 0;">START → agent → [route_agent] → tools → [route_after_tools] → synthesis_enforcer
+                              → END                          → governance_retry
+                                                             → agent
+
+synthesis_enforcer → [route_after_tools] → governance_retry → agent
+                                         → agent
+
+route_after_tools enforces two invariants by graph structure — not by LLM instruction:
+1. Every search_documents result must be followed by synthesize + verify (synthesis_enforcer_node)
+2. A FLAGGED governance verdict triggers an automatic re-search and re-synthesis
+   within the retry budget (governance_retry_node)</pre>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Retrieval</strong><br>
+  HybridRetriever fuses three signals via Reciprocal Rank Fusion (RRF): BM25 keyword search, TF-IDF similarity, and optional dense embeddings. IndexRegistry lazy-loads and caches corpus indexes on first access, thread-safe.<br><br>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Governance</strong><br>
+  GovernanceAgent extracts claims from the synthesized answer and checks each against retrieved passages via word overlap. Returns a GovernanceVerdict with verdict (APPROVED / FLAGGED / REJECTED), grounding_score (0–1), unverified_claims, and an immutable audit_id. Threshold is configurable via GROUNDING_THRESHOLD.<br><br>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Strategist / Executor Split</strong><br>
+  Claude's system prompt positions it as a strategist with two responsibilities: call search_documents with the right corpus and query, then write a plain-prose final answer from the verified synthesis result. Synthesis, verification, and retry are invisible to it — handled entirely by the graph. This separation makes the pipeline deterministic and auditable regardless of LLM compliance.<br><br>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Key Design Decisions — worth discussing in interview</strong>
   <ul style="margin:8px 0;padding-left:20px;font-size:13px;line-height:2;">
-    <li><strong>corpus/fsi/</strong> — AML, KYC, OFAC, capital adequacy, AI governance</li>
-    <li><strong>corpus/pharma/</strong> — Clinical trials, FDA/EMA, GxP frameworks</li>
-    <li><strong>corpus/manufacturing/</strong> — Quality systems, CAPA, safety-critical components</li>
-    <li><strong>corpus/legal/</strong> — Contracts, data privacy, jurisdiction rules</li>
+    <li><strong>Why graph-enforced synthesis rather than prompting:</strong> LLM instruction-following is unreliable for invariant sequences; graph structure guarantees it</li>
+    <li><strong>Why two LLMs:</strong> separates strategic reasoning (tool selection) from content generation (grounded answers), preventing the orchestrator from hallucinating answer content</li>
+    <li><strong>Why opaque tokens (evidence_json, synthesis_json):</strong> prevents the LLM from summarizing or modifying evidence mid-pipeline, preserving grounding integrity</li>
   </ul>
-  Each corpus has docs/ (source files) and scenarios.json (demo queries).<br><br>
-
-  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
-
-  <strong>Key Design Decisions</strong>
-  <ul style="margin:8px 0;padding-left:20px;font-size:13px;line-height:2;">
-    <li>AgentState is the single source of truth — no state in node functions</li>
-    <li>add_messages reducer is append-only — nodes return {"messages": [new_msg]} only</li>
-    <li>Opaque tokens (evidence_json, synthesis_json) flow between tools unmodified — never summarized or modified inline</li>
-    <li>Governance audit trail — every answer gets a GovernanceVerdict with audit_id, grounding_score, timestamp</li>
-    <li>Hard limits enforced by router: MAX_SEARCH_ATTEMPTS=4, MAX_RESYNTHESIS_ATTEMPTS=2, MAX_AGENT_MESSAGES=20</li>
-    <li>Config via config.py only — no os.environ direct access anywhere</li>
-  </ul>
-
-  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
-
-  <strong>Tech Stack</strong><br>
-  <span style="font-size:13px;">LangGraph + LangChain + langchain-anthropic for orchestration → rank-bm25 + numpy for retrieval → sentence-transformers (optional dense) → ollama / openai for synthesis → weasyprint for PDF output → mcp for pluggable external tools (email server).</span><br><br>
-
-  <strong>Entry point:</strong> demo/agent_demo.py
 
 </div>
 
