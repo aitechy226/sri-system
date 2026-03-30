@@ -491,5 +491,86 @@ technical_presales persona
   <strong>SR 11-7</strong>: Federal Reserve model risk management guidance — the standard Moody's clients' MRM teams work to
 </div>
 
+
+<h2>System Reference — Enterprise RAG Architecture</h2>
+<div style="background:#f7f7f5;padding:20px 24px;border-radius:4px;font-size:14px;line-height:1.8;">
+
+  <strong>What It Is</strong><br>
+  Enterprise RAG with Agentic Orchestration — a production-grade Retrieval-Augmented Generation system built on LangGraph, using a ReAct-style Claude agent to dynamically orchestrate tool calls across multi-domain enterprise corpora.<br><br>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Architecture</strong><br><br>
+
+  <strong>Two-Model Design</strong><br>
+  <table style="width:100%;border-collapse:collapse;font-size:13px;margin:12px 0;">
+    <thead>
+      <tr style="background:#e8e8e8;">
+        <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Role</th>
+        <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Config</th>
+        <th style="padding:8px 12px;text-align:left;border:1px solid #ccc;">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="padding:8px 12px;border:1px solid #ccc;">Reasoning Agent</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">AGENT_BACKEND / AGENT_MODEL (Claude)</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">Decides which tools to call, evaluates evidence quality, routes retries</td>
+      </tr>
+      <tr style="background:#f7f7f5;">
+        <td style="padding:8px 12px;border:1px solid #ccc;">Synthesis LLM</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">LLM_BACKEND / LLM_MODEL (Ollama/OpenAI)</td>
+        <td style="padding:8px 12px;border:1px solid #ccc;">Generates grounded answers strictly from retrieved passages</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <strong>LangGraph Graph</strong>
+  <pre style="background:#efefef;padding:12px;border-radius:4px;font-size:13px;line-height:1.6;margin:8px 0;">START → agent_node → [route_agent] → tool_executor_node → (loop back)
+                           ↓
+                          END
+route_agent exits on: clarification flag, message limit, max search attempts, or no tool calls.</pre>
+
+  <strong>Tool Chain (per query)</strong>
+  <ol style="margin:8px 0;padding-left:20px;font-size:13px;line-height:2;">
+    <li><strong>search_documents</strong> — HybridRetriever (BM25 + TF-IDF + dense embeddings, RRF fusion) → returns opaque evidence_json</li>
+    <li><strong>synthesize_answer</strong> — SynthesisAgent calls synthesis LLM with evidence block → returns opaque synthesis_json</li>
+    <li><strong>verify_answer</strong> — GovernanceAgent checks claim grounding score against evidence → APPROVED / FLAGGED / REJECTED</li>
+    <li><strong>ask_clarification</strong> — exits the graph if query is unresolvable</li>
+  </ol>
+  If FLAGGED, the agent re-searches for unverified claims and re-synthesizes (up to MAX_RESYNTHESIS_ATTEMPTS).<br><br>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Domain Coverage (Corpora)</strong>
+  <ul style="margin:8px 0;padding-left:20px;font-size:13px;line-height:2;">
+    <li><strong>corpus/fsi/</strong> — AML, KYC, OFAC, capital adequacy, AI governance</li>
+    <li><strong>corpus/pharma/</strong> — Clinical trials, FDA/EMA, GxP frameworks</li>
+    <li><strong>corpus/manufacturing/</strong> — Quality systems, CAPA, safety-critical components</li>
+    <li><strong>corpus/legal/</strong> — Contracts, data privacy, jurisdiction rules</li>
+  </ul>
+  Each corpus has docs/ (source files) and scenarios.json (demo queries).<br><br>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Key Design Decisions</strong>
+  <ul style="margin:8px 0;padding-left:20px;font-size:13px;line-height:2;">
+    <li>AgentState is the single source of truth — no state in node functions</li>
+    <li>add_messages reducer is append-only — nodes return {"messages": [new_msg]} only</li>
+    <li>Opaque tokens (evidence_json, synthesis_json) flow between tools unmodified — never summarized or modified inline</li>
+    <li>Governance audit trail — every answer gets a GovernanceVerdict with audit_id, grounding_score, timestamp</li>
+    <li>Hard limits enforced by router: MAX_SEARCH_ATTEMPTS=4, MAX_RESYNTHESIS_ATTEMPTS=2, MAX_AGENT_MESSAGES=20</li>
+    <li>Config via config.py only — no os.environ direct access anywhere</li>
+  </ul>
+
+  <hr style="border:none;border-top:1px solid #ddd;margin:16px 0;">
+
+  <strong>Tech Stack</strong><br>
+  <span style="font-size:13px;">LangGraph + LangChain + langchain-anthropic for orchestration → rank-bm25 + numpy for retrieval → sentence-transformers (optional dense) → ollama / openai for synthesis → weasyprint for PDF output → mcp for pluggable external tools (email server).</span><br><br>
+
+  <strong>Entry point:</strong> demo/agent_demo.py
+
+</div>
+
 </body>
 </html>
