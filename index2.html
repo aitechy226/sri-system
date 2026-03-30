@@ -420,8 +420,8 @@ technical_presales persona
   <strong>4. User submits a query</strong><br>
   &nbsp;&nbsp;e.g. "What is our KYC policy for high-risk customers?"<br><br>
 
-  <strong>5. Orchestrator LLM picks the corpus</strong><br>
-  &nbsp;&nbsp;Reads the query, selects the right index based on content. Never asks the user.<br><br>
+  <strong>5. Reasoning agent selects corpus and formulates query</strong><br>
+  &nbsp;&nbsp;Claude reads the query, picks the right corpus based on content, and calls <code>search_documents</code>. That's its only job at this point — corpus selection and query formulation. Synthesis and verification are handled automatically by the graph after this. The reasoning agent never calls those tools directly.<br><br>
 
   <strong>6. Query vectorization</strong><br>
   &nbsp;&nbsp;The query string is passed through the same sentence transformer model used during ingestion to produce a query vector. Required before dense embedding search can run.<br><br>
@@ -434,15 +434,15 @@ technical_presales persona
   <strong>8. Reciprocal Rank Fusion merges the results</strong><br>
   &nbsp;&nbsp;Three ranked lists combined into one. Top-scoring chunks returned as the evidence object.<br><br>
 
-  <strong>9. Orchestrator evaluates retrieval quality</strong><br>
-  &nbsp;&nbsp;top_score &gt; 0.010 → reliable, proceed to synthesis<br>
+  <strong>9. Reasoning agent evaluates retrieval quality</strong><br>
+  &nbsp;&nbsp;top_score &gt; 0.010 → reliable, proceed<br>
   &nbsp;&nbsp;top_score 0.003–0.010 → marginal, rephrase using domain synonyms and retry<br>
   &nbsp;&nbsp;top_score &lt; 0.003 → no signal, try different corpus or substantially different query<br>
   &nbsp;&nbsp;Minimum 3 retrieved chunks required before synthesizing — even a high top_score isn't enough if only 1–2 chunks came back. Conservative design: biased toward breadth of evidence before synthesizing.<br>
   &nbsp;&nbsp;Known limitation: for simple factual lookups where the answer genuinely lives in one place (e.g. "what is the SAR filing deadline?"), this can be overly strict — the system retries unnecessarily. In production this threshold should be tunable per corpus type.<br><br>
 
-  <strong>10. Orchestrator calls the synthesis tool</strong><br>
-  &nbsp;&nbsp;Passes the matched chunks + original query as the evidence object.<br><br>
+  <strong>10. synthesis_enforcer_node fires automatically</strong><br>
+  &nbsp;&nbsp;Once <code>search_documents</code> completes, the graph routes directly to <code>synthesis_enforcer_node</code> — no LLM instruction needed. This is graph-enforced, not prompt-instructed. The reasoning agent cannot skip or bypass it. The node passes the matched chunks + original query to the synthesis tool.<br><br>
 
   <strong>11. Synthesis LLM generates the answer</strong><br>
   &nbsp;&nbsp;Input: system prompt (use only retrieved evidence) + matched chunks + original query. That's it — no corpus access, no training knowledge.<br>
@@ -452,8 +452,8 @@ technical_presales persona
   &nbsp;&nbsp;Regex pulls out verifiable sentences — numbers, regulatory terms, obligation language (must/shall/required).<br>
   &nbsp;&nbsp;These extracted claims, not the full answer, are what gets verified.<br><br>
 
-  <strong>13. Orchestrator calls the governance tool</strong><br>
-  &nbsp;&nbsp;Passes the extracted claims and the original retrieved passages.<br><br>
+  <strong>13. synthesis_enforcer_node calls verify_answer unconditionally</strong><br>
+  &nbsp;&nbsp;The same node that triggered synthesis also calls <code>verify_answer</code> immediately after — again, graph-enforced. The reasoning agent does not make this call. Governance cannot be skipped.<br><br>
 
   <strong>14. Governance tool runs word-overlap verification</strong><br>
   &nbsp;&nbsp;Each claim checked independently against raw corpus text.<br>
@@ -461,13 +461,15 @@ technical_presales persona
   &nbsp;&nbsp;≥ 0.6 → APPROVED &nbsp;|&nbsp; 0.30–0.59 → FLAGGED &nbsp;|&nbsp; &lt; 0.30 → REJECTED<br>
   &nbsp;&nbsp;Common trigger for FLAGGED: paraphrase drift, not hallucination — e.g. corpus says "one month," synthesis wrote "30 days." Same fact, word-overlap fails.<br><br>
 
-  <strong>15. FLAGGED retry</strong><br>
-  &nbsp;&nbsp;Orchestrator reads the list of unverified claims from the verdict.<br>
-  &nbsp;&nbsp;Constructs a new targeted query on those specific gaps — LLM's own judgment, not a blind re-run.<br>
-  &nbsp;&nbsp;Re-searches, re-synthesizes. Maximum 2 attempts — soft limit enforced via system prompt instruction to the LLM, not hard-coded in the router.<br><br>
+  <strong>15. FLAGGED → governance_retry_node takes over</strong><br>
+  &nbsp;&nbsp;If the verdict is FLAGGED, <code>governance_retry_node</code> activates — no reasoning agent involvement. It reads the list of unverified claims from the verdict, builds a sharpened query (original query terms + unverified claim terms), and re-runs the full search → synthesize → verify loop directly. Maximum 2 attempts. This is a hard graph-level guarantee — not a soft prompt instruction that an LLM could forget or skip.<br><br>
 
-  <strong>16. Final answer delivered</strong><br>
-  &nbsp;&nbsp;Verdict + grounding score + audit ID (SHA-256 hash, immutable record of what was retrieved, synthesized, verified).
+  <strong>16. Reasoning agent writes the final answer</strong><br>
+  &nbsp;&nbsp;Once a <code>verify_answer</code> result lands in the thread, the reasoning agent's job resumes. It reads the verdict and the synthesis summary, then writes a plain-prose final answer. It never sees the raw chunks — only the verified summary.<br>
+  &nbsp;&nbsp;APPROVED → state the answer with supporting detail, include audit ID and corpus searched.<br>
+  &nbsp;&nbsp;FLAGGED → state the answer, note it is partially verified, include audit ID.<br>
+  &nbsp;&nbsp;REJECTED → decline gracefully, recommend the user consult the relevant subject matter expert.<br>
+  &nbsp;&nbsp;Audit ID: SHA-256 hash of query + timestamp — immutable record of what was retrieved, synthesized, and verified.
 </div>
 
 <h2>Key Numbers to Know Cold</h2>
@@ -479,7 +481,7 @@ technical_presales persona
   <strong>Min retrieved chunks before synthesis</strong>: 3 (breadth of evidence requirement, independent of score)<br>
   <strong>Governance verdicts</strong>: APPROVED / FLAGGED / REJECTED<br>
   <strong>APPROVED</strong>: grounding ≥ 0.6<br>
-  <strong>FLAGGED</strong>: grounding 0.30–0.59 — LLM constructs targeted retry query, max 2 attempts (soft limit via prompt)<br>
+  <strong>FLAGGED</strong>: grounding 0.30–0.59 — governance_retry_node builds sharpened query (original + unverified claim terms), re-runs search→synthesize→verify, max 2 attempts (hard graph limit, no reasoning agent involved)<br>
   <strong>REJECTED</strong>: grounding &lt; 0.30 — insufficient evidence, analyst must add documents and re-run<br>
   <strong>Chunk size</strong>: 80 words | <strong>Overlap</strong>: 15 words (config.py defaults)<br>
   <strong>Retrieval</strong>: keyword (BM25 + TF-IDF) + semantic (dense embeddings) → Reciprocal Rank Fusion<br>
